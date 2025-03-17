@@ -1,0 +1,55 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+           - localhost:9093   #CHANGES = write your host where alert manager running(here it is locally so I used Localhost) or else give Ip:port of alert manager VM
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+    - "alert_rules.yml"      #CHANGES =  Give your file name where you described rules --> in this case alert_rules.yml has rules
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:    # CHANGES = add your jobs with targets
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["localhost:9090"]    # CHANGES: added prometheus job with port no 
+  - job_name: node_exporter            #CHANGES: Adding Node exporter
+    static_configs:
+      - targets:
+          - 3.108.53.14:9100 # here is IP of VM on which node_exporter installed with port(9100) in our case node_exporter installed in VM 
+
+
+  - job_name: blackbox          #blackbox yml you can get it from, prometheus.io --> you can go to blackbox github --> and in there from Prometheus Configuration you can get yml info 
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - http://prometheus.io
+          - https://prometheus.io
+          - http://3.108.53.14:80/     #add your website ip you want to check the running or not status
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: 3.110.115.93:9115  # IP of machine on which blackbox installed with port of blackbox i.e.9115
+

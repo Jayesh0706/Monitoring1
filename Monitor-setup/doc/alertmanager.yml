@@ -1,0 +1,22 @@
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+  receiver: 'email-notification'   #using email so email_notification
+receivers:
+  - name: 'email-notification'
+    email_configs:
+      - to: fakeacjn@gmail.com   #your mail
+        from: test@gmail.com
+        smarthost: smtp.gmail.com:587   #port 587 should be open in your Security Group
+        auth_username: fakeacjn@gmail.com
+        auth_identity: fakeacjn@gmail.com
+        auth_password: fpww kgod bmis pckh   #password from myaccount.google.com/apppasswords (2 step authencation should be on )
+        send_resolved: true
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
