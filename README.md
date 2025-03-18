@@ -1,141 +1,175 @@
-# Monitoring1
 Step-by-Step Guide to Setting Up Prometheus Monitoring with Blackbox Exporter and Alertmanager
+==============================================================================================
 
-1. Install Prometheus, Blackbox Exporter, and Alertmanager
+1\. Install Prometheus, Blackbox Exporter, and Alertmanager
+-----------------------------------------------------------
 
-Download the necessary components from Prometheus.io using wget:
+1.  Download the necessary components from [Prometheus.io](https://prometheus.io) using `wget`:
 
-wget <prometheus_download_link>
-wget <blackbox_exporter_download_link>
-wget <alertmanager_download_link>
+    ```
+    wget <prometheus_download_link>
+    wget <blackbox_exporter_download_link>
+    wget <alertmanager_download_link>
+    ```
 
-Extract the downloaded .tar files:
+2.  Extract the downloaded `.tar` files:
 
-tar -xvf prometheus-*.tar.gz
-tar -xvf blackbox_exporter-*.tar.gz
-tar -xvf alertmanager-*.tar.gz
+    ```
+    tar -xvf prometheus-*.tar.gz
+    tar -xvf blackbox_exporter-*.tar.gz
+    tar -xvf alertmanager-*.tar.gz
+    ```
 
-Remove the .tar files to free up space:
+3.  Remove the `.tar` files to free up space:
 
-rm prometheus-*.tar.gz blackbox_exporter-*.tar.gz alertmanager-*.tar.gz
+    ```
+    rm prometheus-*.tar.gz blackbox_exporter-*.tar.gz alertmanager-*.tar.gz
+    ```
 
-Rename the extracted directories for easier reference:
+4.  Rename the extracted directories for easier reference:
 
-mv prometheus-* prometheus
-mv blackbox_exporter-* blackbox
-mv alertmanager-* alertmanager
+    ```
+    mv prometheus-* prometheus
+    mv blackbox_exporter-* blackbox
+    mv alertmanager-* alertmanager
+    ```
 
-2. Install and Start Node Exporter on Website Machine
+2\. Install and Start Node Exporter on Website Machine
+------------------------------------------------------
 
-Install and start your application on the website machine.
+1.  Install and start your application on the website machine.
 
-Install Node Exporter to scrape metrics from the website:
+2.  Install Node Exporter to scrape metrics from the website:
 
-wget <node_exporter_download_link>
-tar -xvf node_exporter-*.tar.gz
-rm node_exporter-*.tar.gz
-mv node_exporter-* node_exporter
+    ```
+    wget <node_exporter_download_link>
+    tar -xvf node_exporter-*.tar.gz
+    rm node_exporter-*.tar.gz
+    mv node_exporter-* node_exporter
+    ```
 
-Start Node Exporter:
+3.  Start Node Exporter:
 
-./node_exporter &
+    ```
+    ./node_exporter &
+    ```
 
-(Runs Node Exporter in the background to monitor system metrics.)
+    *(Runs Node Exporter in the background to monitor system metrics.)*
 
-3. Start Prometheus Service
+3\. Start Prometheus Service
+----------------------------
 
-Start Prometheus as a background process:
+1.  Start Prometheus as a background process:
 
-./prometheus &
+    ```
+    ./prometheus &
+    ```
 
-Create alert_rules.yml inside the Prometheus directory and define alerting rules.
+2.  Create `alert_rules.yml` inside the Prometheus directory and define alerting rules.
 
-4. Configure Prometheus for Alerting Rules
+4\. Configure Prometheus for Alerting Rules
+-------------------------------------------
 
-Edit prometheus.yml and add the rule_files section:
+1.  Edit `prometheus.yml` and add the `rule_files` section:
 
-rule_files:
-  - "alert_rules.yml"
+    ```
+    rule_files:
+      - "alert_rules.yml"
+    ```
 
-Restart Prometheus to apply changes:
+2.  Restart Prometheus to apply changes:
 
-pgrep prometheus   # Get the process ID of Prometheus
-kill <process_id>  # Kill the running Prometheus process
-./prometheus &     # Restart Prometheus in the background
+    ```
+    pgrep prometheus   # Get the process ID of Prometheus
+    kill <process_id>  # Kill the running Prometheus process
+    ./prometheus &     # Restart Prometheus in the background
+    ```
 
-5. Connect Blackbox Exporter, Node Exporter, and Alertmanager to Prometheus
+5\. Connect Blackbox Exporter, Node Exporter, and Alertmanager to Prometheus
+----------------------------------------------------------------------------
 
-Edit prometheus.yml to include scrape configurations for:
+1.  Edit `prometheus.yml` to include scrape configurations for:
 
-Alertmanager (Port: 9093)
+    -   Alertmanager (Port: 9093)
 
-Blackbox Exporter (Port: 9115)
+    -   Blackbox Exporter (Port: 9115)
 
-Node Exporter (Port: 9100)
+    -   Node Exporter (Port: 9100)
 
-Add the necessary job configurations. For example:
+2.  Add the necessary job configurations. For example:
 
-scrape_configs:
-  - job_name: 'alertmanager'
-    static_configs:
-      - targets: ['localhost:9093']
+    ```
+    scrape_configs:
+      - job_name: 'alertmanager'
+        static_configs:
+          - targets: ['localhost:9093']
 
-  - job_name: 'blackbox'
-    metrics_path: /probe
-    params:
-      module: [http_2xx]
-    static_configs:
-      - targets:
-        - http://example.com
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
-      - target_label: __address__
-        replacement: localhost:9115
+      - job_name: 'blackbox'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+            - http://example.com
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: localhost:9115
 
-  - job_name: 'node_exporter'
-    static_configs:
-      - targets: ['localhost:9100']
+      - job_name: 'node_exporter'
+        static_configs:
+          - targets: ['localhost:9100']
+    ```
 
-Restart Prometheus after making changes:
+3.  Restart Prometheus after making changes:
 
-pgrep prometheus | xargs kill
-./prometheus &
+    ```
+    pgrep prometheus | xargs kill
+    ./prometheus &
+    ```
 
-6. Configure Email Notifications in Alertmanager
+6\. Configure Email Notifications in Alertmanager
+-------------------------------------------------
 
-Edit alertmanager.yml located inside the Alertmanager directory.
+1.  Edit `alertmanager.yml` located inside the Alertmanager directory.
 
-Configure email settings:
+2.  Configure email settings:
 
-route:
-  receiver: 'email'
-receivers:
-  - name: 'email'
-    email_configs:
-      - to: 'your-email@example.com'
-        from: 'alertmanager@example.com'
-        smarthost: 'smtp.example.com:587'
-        auth_username: 'your-email@example.com'
-        auth_password: 'your-password'
+    ```
+    route:
+      receiver: 'email'
+    receivers:
+      - name: 'email'
+        email_configs:
+          - to: 'your-email@example.com'
+            from: 'alertmanager@example.com'
+            smarthost: 'smtp.example.com:587'
+            auth_username: 'your-email@example.com'
+            auth_password: 'your-password'
+    ```
 
-Restart Alertmanager to apply changes:
+3.  Restart Alertmanager to apply changes:
 
-./alertmanager &
+    ```
+    ./alertmanager &
+    ```
 
 Ports Used in the Setup
+-----------------------
 
-Prometheus: 9090
+-   **Prometheus:** `9090`
 
-Alertmanager: 9093
+-   **Alertmanager:** `9093`
 
-Blackbox Exporter: 9115
+-   **Blackbox Exporter:** `9115`
 
-Node Exporter: 9100
+-   **Node Exporter:** `9100`
 
 Conclusion
+----------
 
 By following these steps, you have successfully set up Prometheus, Blackbox Exporter, Alertmanager, and Node Exporter for monitoring your application and website. The setup includes alerting rules and email notifications to keep track of system performance and availability.
 
